@@ -23,9 +23,7 @@ impl Game {
         }
     }
 
-    fn move_validate(&self, pos: u32) -> u32 {
-        5
-    }
+
     fn get_player_move(&self) -> u32 {
         loop {
             println!("Which point you'd like to move?");
@@ -41,6 +39,36 @@ impl Game {
         }
     }
 
+    fn check_possible_move(&mut self, pos: i32) -> Option<i32> {
+        let mut r: Option<i32> = None;
+        match pos {
+            8 => {
+                for i in 0..=7 {
+                    if self.board[i as usize] == 0 {
+                        //println!("free{}", i);
+                        r = Some(i);
+                    }
+                }
+            }
+            _ => {
+                let choice = vec![modulus(pos - 1, 8), modulus(pos + 1, 8), 8];
+                for i in choice {
+                    if self.board[i as usize] == 0 && i != 8 {
+                        //println!("free{}", i);
+                        r = Some(i)
+                    } else if self.board[i as usize] == 0 && i == 8 {
+                        println!("centr move");
+                        if self.board[modulus(pos - 1, 8) as usize] == 2 || self.board[modulus(pos + 1, 8) as usize] == 2
+                        {
+                            r = Some(i)
+                        }
+                    }
+                }
+            }
+        }
+        r
+    }
+
     fn swap(&mut self, pos: i32) {
         if pos == 8 {
             for i in 0..=7 {
@@ -54,43 +82,53 @@ impl Game {
         } else {
             let choice = vec![modulus(pos - 1, 8), modulus(pos + 1, 8), 8];
             for i in choice {
-                if self.board[i as usize] == 0 {
+                if self.board[i as usize] == 0 && i != 8 {
                     //println!("free{}", i);
                     self.board[i as usize] = self.board[pos as usize];
                     self.board[pos as usize] = 0;
+                } else if self.board[i as usize] == 0 && i == 8 {
+                    println!("centr move");
                 }
             }
             //println!("{} n {} {}", pos, modulus(pos - 1, 8), modulus(pos + 1, 8))
         }
     }
 
-    fn get_bot_move(&self) -> u32 {
+    fn get_bot_move(&self) -> i32 {
         let mut pos = 0;
         for i in &self.board {
-            pos += 1;
+
             if *i == 2 {
                 let choice = vec![modulus(pos - 1, 8), modulus(pos + 1, 8), 8];
                 println!("{} n {} {}", pos, modulus(pos - 1, 8), modulus(pos + 1, 8));
                 for n in &choice {
+                    dbg!(n);
                     match self.board[*n as usize] {
                         0 => {
                             println!("free {} pos {}", self.board[*n as usize], n);
-                            return pos as u32;
+                            return pos;
                         }
-                        1 => println!("not {}", self.board[choice[0] as usize]),
-                        2 => println!("not {}", self.board[choice[0] as usize]),
-                        _ => println!("not {}", self.board[choice[0] as usize])
+                        1 => println!("not {}", self.board[*n as usize]),
+                        2 => println!("not {}", self.board[*n as usize]),
+                        _ => println!("not {}", self.board[*n as usize])
                     }
                 }
             }
+            pos += 1;
         }
-        1
+        pos
     }
+
 
     pub fn game_turn(&mut self) {
         match self.current_turn {
             Turn::Player => {
                 let pos = self.get_player_move();
+                let r = self.check_possible_move(pos as i32);
+                match r {
+                    None => {}
+                    Some(i) => { println!("{}", i); }
+                };
                 self.swap(pos as i32);
                 self.current_turn = Turn::Bot;
                 println!("player move");
