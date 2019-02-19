@@ -3,14 +3,16 @@
 #[allow(unused_variables)]
 use std::io;
 
+use crate::game::Players::Human;
+
 pub struct Game {
-    current_turn: Turn,
+    current_turn: Players,
     board: Vec<i32>,
 
 }
 
-enum Turn {
-    Player,
+enum Players {
+    Human,
     Bot,
 }
 
@@ -18,9 +20,10 @@ enum Turn {
 impl Game {
     pub fn new() -> Game {
         Game {
-            current_turn: Turn::Player,
+            current_turn: Players::Human,
             board: vec![1, 1, 1, 1, 2, 2, 2, 2, 0],
         }
+
     }
 
     fn get_bot_move(&self) -> i32 {
@@ -29,7 +32,7 @@ impl Game {
             if *i == 2 {
                 let r = self.check_possible_move(*i);
                 match r {
-                    None => { println!("not free {}", i) }
+                    None => {}
                     Some(pos) => return pos
                 }
             }
@@ -38,22 +41,7 @@ impl Game {
     }
 
 
-    fn check_game_over(&self) -> i32 {
-        let mut check_value = 0;
-        match &self.current_turn {
-            Bot => {
-                check_value = 2;
-            }
 
-            Player => { check_value = 1; }
-        }
-        for i in &self.board {
-            if *i == check_value {
-                let r = self.check_possible_move(*i);
-            }
-        }
-        check_value
-    }
 
 
     fn get_player_move(&self) -> i32 {
@@ -77,14 +65,60 @@ impl Game {
         }
     }
 
+    fn check_game_over(&self) -> Vec<Option<i32>> {
+        let mut check_value = 0;
+        let mut result = 0;
+        let mut all_options = vec![];
+
+        match &self.current_turn {
+            Bot => {
+                check_value = 1;
+                println!("Bot")
+            }
+            Player => {
+                check_value = 2;
+                println!("Non-Bot")
+            }
+        }
+
+        println!("check {}", check_value);
+
+        for i in &self.board {
+            if *i == check_value {
+                let r = self.check_possible_move(*i);
+                all_options.append(&mut vec![r]);
+
+                /*match r {
+                    Some(i) => {
+                        result = check_value;
+                        println!("{} {} free",result,i);
+                    }
+                    None => {println!("not free")}
+                }*/
+            }
+        }
+        all_options
+    }
+
     fn check_possible_move(&self, pos: i32) -> Option<i32> {
-        let mut r: Option<i32> = None;
+        let check_value;
+        let mut result: Option<i32> = None;
+        match &self.current_turn {
+            Bot => {
+                check_value = 1;
+                println!("non human");
+            }
+            Player => {
+                check_value = 2;
+                println!("human");
+            }
+        }
+
         match pos {
             8 => {
                 for i in 0..=7 {
                     if self.board[i as usize] == 0 {
-//println!("free{}", i);
-                        r = Some(i);
+                        result = Some(i);
                     }
                 }
             }
@@ -92,19 +126,18 @@ impl Game {
                 let choice = vec![modulus(pos - 1, 8), modulus(pos + 1, 8), 8];
                 for i in choice {
                     if (self.board[i as usize] == 0) & (i != 8) {
-//println!("free{}", i);
-                        r = Some(i)
+                        result = Some(i)
                     } else if (self.board[i as usize] == 0) & (i == 8) {
-                        println!("center move");
-                        if (self.board[modulus(pos - 1, 8) as usize] == 2) || (self.board[modulus(pos + 1, 8) as usize] == 2)
+                        if (self.board[modulus(pos - 1, 8) as usize] == check_value) || (self.board[modulus(pos + 1, 8) as usize] == check_value)
                         {
-                            r = Some(i)
+                            println!("{}", check_value);
+                            result = Some(i)
                         }
                     }
                 }
             }
         }
-        r
+        result
     }
 
     fn swap(&mut self, pos: i32, free_pos: i32) {
@@ -114,20 +147,30 @@ impl Game {
 
 
     pub fn game_turn(&mut self) {
+        match &self.current_turn {
+            Human => { println!("human----"); }
+            bot => { println!("bot---"); }
+        }
+
+        let res = self.check_game_over();
+
+        dbg!(res[0]);
+        match &self.current_turn {
+            Human => { println!("human----"); }
+            bot => { println!("bot---"); }
+        }
         match self.current_turn {
-            Turn::Player => {
+            Players::Human => {
                 let pos = self.get_player_move();
                 self.swap(pos as i32, pos);
-
-
-                self.current_turn = Turn::Bot;
+                self.current_turn = Players::Bot;
                 println!("player moved");
                 self.print_board();
             }
-            Turn::Bot => {
+            Players::Bot => {
                 let pos = self.get_bot_move();
                 self.swap(pos as i32, 0);
-                self.current_turn = Turn::Player;
+                self.current_turn = Players::Human;
                 println!("bot moved");
                 self.print_board();
             }
