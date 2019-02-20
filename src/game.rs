@@ -65,36 +65,31 @@ impl Game {
         }
     }
 
-    fn check_game_over(&self) -> Vec<Option<i32>> {
+    fn check_game_over(&self) -> Vec<i32> {
         let mut check_value = 0;
-        let mut result = 0;
         let mut all_options = vec![];
 
         match &self.current_turn {
-            Bot => {
-                check_value = 1;
+            Players::Bot => {
+                check_value = 2;
                 println!("Bot")
             }
-            Player => {
-                check_value = 2;
+            Players::Human => {
+                check_value = 1;
                 println!("Non-Bot")
             }
         }
 
-        println!("check {}", check_value);
-
-        for i in &self.board {
-            if *i == check_value {
-                let r = self.check_possible_move(*i);
-                all_options.append(&mut vec![r]);
-
-                /*match r {
+        for pos in 0..self.board.len() {
+            if self.board[i] == check_value {
+                let r = self.check_possible_move(pos as i32);
+                match r {
+                    None => {},
                     Some(i) => {
-                        result = check_value;
-                        println!("{} {} free",result,i);
+                        all_options.append(&mut vec![i]);
+                        println!("add")
                     }
-                    None => {println!("not free")}
-                }*/
+                }
             }
         }
         all_options
@@ -104,16 +99,14 @@ impl Game {
         let check_value;
         let mut result: Option<i32> = None;
         match &self.current_turn {
-            Bot => {
+            Players::Bot => {
                 check_value = 1;
-                println!("non human");
             }
-            Player => {
+            Players::Human => {
                 check_value = 2;
-                println!("human");
             }
         }
-
+        dbg!(pos);
         match pos {
             8 => {
                 for i in 0..=7 {
@@ -126,11 +119,12 @@ impl Game {
                 let choice = vec![modulus(pos - 1, 8), modulus(pos + 1, 8), 8];
                 for i in choice {
                     if (self.board[i as usize] == 0) & (i != 8) {
+                        println!("r{}", i);
                         result = Some(i)
                     } else if (self.board[i as usize] == 0) & (i == 8) {
                         if (self.board[modulus(pos - 1, 8) as usize] == check_value) || (self.board[modulus(pos + 1, 8) as usize] == check_value)
                         {
-                            println!("{}", check_value);
+                            println!("r{}", i);
                             result = Some(i)
                         }
                     }
@@ -147,20 +141,12 @@ impl Game {
 
 
     pub fn game_turn(&mut self) {
-        match &self.current_turn {
-            Human => { println!("human----"); }
-            bot => { println!("bot---"); }
-        }
-
-        let res = self.check_game_over();
-
-        dbg!(res[0]);
-        match &self.current_turn {
-            Human => { println!("human----"); }
-            bot => { println!("bot---"); }
-        }
         match self.current_turn {
             Players::Human => {
+                let res = self.check_game_over();
+                dbg!(res);
+
+                println!("human----");
                 let pos = self.get_player_move();
                 self.swap(pos as i32, pos);
                 self.current_turn = Players::Bot;
@@ -168,6 +154,7 @@ impl Game {
                 self.print_board();
             }
             Players::Bot => {
+                println!("bot---");
                 let pos = self.get_bot_move();
                 self.swap(pos as i32, 0);
                 self.current_turn = Players::Human;
