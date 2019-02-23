@@ -9,8 +9,7 @@ fn main() {
     let mut game = game::Game::new();
 
     game.print_board();
-    game.game_turn();
-    game.game_turn();
-    game.game_turn();
-    game.game_turn();
+    loop {
+        if game.game_turn() { break }
+    }
 }

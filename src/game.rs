@@ -1,9 +1,7 @@
-#[allow(unused_imports)]
-#[allow(dead_code)]
-#[allow(unused_variables)]
+use std::collections::HashMap;
 use std::io;
 
-use crate::game::Players::Human;
+use rand::Rng;
 
 pub struct Game {
     current_turn: Players,
@@ -23,76 +21,68 @@ impl Game {
             current_turn: Players::Human,
             board: vec![1, 1, 1, 1, 2, 2, 2, 2, 0],
         }
-
     }
 
-    fn get_bot_move(&self) -> i32 {
-        //let mut pos = 0;
-        for i in &self.board {
-            if *i == 2 {
-                let r = self.check_possible_move(*i);
-                match r {
-                    None => {}
-                    Some(pos) => return pos
-                }
+    fn get_bot_move(&self, moves: HashMap<i32, i32>) -> (i32, i32) {
+        let mut keys_vector: Vec<i32> = vec![];
+        for keys in moves.keys() {
+            keys_vector.append(&mut vec![keys.clone()]);
+        }
+        let i = rand::thread_rng().gen_range(0, keys_vector.len());
+        let key = keys_vector[i];
+
+        match moves.get(&key) {
+            None => {}
+            Some(free_pos) => {
+                return (key, *free_pos);
             }
         }
-        0
+        (0, 0)
     }
 
-
-
-
-
-    fn get_player_move(&self) -> i32 {
+    fn get_player_move(&self, moves: HashMap<i32, i32>) -> (i32, i32) {
         loop {
             println!("Which point you'd like to move?");
             let mut player_input = String::new();
             io::stdin().read_line(&mut player_input).unwrap();
-            match player_input.trim_right().parse::<u32>() {
+            match player_input.trim_right().parse::<i32>() {
                 Err(_) => println!("Try again"),
-                Ok(i) => match i {
-                    0..=8 if self.board[i as usize] == 1 => {
-                        let r = self.check_possible_move(i as i32);
-                        match r {
-                            None => { println!("move impossible") }
-                            Some(i) => return i
-                        }
+                Ok(pos) => {
+                    match moves.get(&pos) {
+                        None => println!("Move impossible"),
+                        Some(free_pos) => return (pos as i32, *free_pos)
                     }
-                    _ => println!("something else!")
                 }
             }
         }
     }
 
-    fn check_game_over(&self) -> Vec<i32> {
-        let mut check_value = 0;
-        let mut all_options = vec![];
+    fn check_game_over(&self) -> HashMap<i32, i32> {//Vec<Vec<i32>> {
+        let check_value;
+        //let mut availiable=vec![];
+        let mut availiable = HashMap::new();
 
         match &self.current_turn {
             Players::Bot => {
                 check_value = 2;
-                println!("Bot")
             }
             Players::Human => {
                 check_value = 1;
-                println!("Non-Bot")
             }
         }
 
-        for pos in 0..self.board.len() {
-            if self.board[i] == check_value {
+        for (pos, n) in self.board.iter().enumerate() {
+            if *n == check_value {
                 let r = self.check_possible_move(pos as i32);
                 match r {
-                    None => {},
+                    None => {}
                     Some(i) => {
-                        all_options.append(&mut vec![i]);
-                        println!("add")
+                        availiable.insert(pos as i32, i);
                     }
                 }
             }
         }
-        all_options
+        availiable
     }
 
     fn check_possible_move(&self, pos: i32) -> Option<i32> {
@@ -106,7 +96,7 @@ impl Game {
                 check_value = 2;
             }
         }
-        dbg!(pos);
+
         match pos {
             8 => {
                 for i in 0..=7 {
@@ -119,12 +109,10 @@ impl Game {
                 let choice = vec![modulus(pos - 1, 8), modulus(pos + 1, 8), 8];
                 for i in choice {
                     if (self.board[i as usize] == 0) & (i != 8) {
-                        println!("r{}", i);
                         result = Some(i)
                     } else if (self.board[i as usize] == 0) & (i == 8) {
                         if (self.board[modulus(pos - 1, 8) as usize] == check_value) || (self.board[modulus(pos + 1, 8) as usize] == check_value)
                         {
-                            println!("r{}", i);
                             result = Some(i)
                         }
                     }
@@ -135,33 +123,45 @@ impl Game {
     }
 
     fn swap(&mut self, pos: i32, free_pos: i32) {
+        println!("{}-->{}", pos, free_pos);
         self.board[free_pos as usize] = self.board[pos as usize];
         self.board[pos as usize] = 0;
     }
 
 
-    pub fn game_turn(&mut self) {
+    pub fn game_turn(&mut self) -> bool {
         match self.current_turn {
             Players::Human => {
                 let res = self.check_game_over();
-                dbg!(res);
 
-                println!("human----");
-                let pos = self.get_player_move();
-                self.swap(pos as i32, pos);
-                self.current_turn = Players::Bot;
-                println!("player moved");
-                self.print_board();
+                if res.len() == 0 {
+                    println!("you lost");
+                    return true;
+                } else {
+                    println!("human----");
+                    let (pos, free_pos) = self.get_player_move(res);
+                    self.swap(pos as i32, free_pos);
+                    self.current_turn = Players::Bot;
+                    println!("human moved");
+                    self.print_board();
+                }
             }
             Players::Bot => {
                 println!("bot---");
-                let pos = self.get_bot_move();
-                self.swap(pos as i32, 0);
-                self.current_turn = Players::Human;
-                println!("bot moved");
-                self.print_board();
+                let res = self.check_game_over();
+                if res.len() == 0 {
+                    println!("Bot lost");
+                    return true;
+                } else {
+                    let (pos, free_pos) = self.get_bot_move(res);
+                    self.swap(pos as i32, free_pos);
+                    self.current_turn = Players::Human;
+                    println!("bot moved");
+                    self.print_board();
+                }
             }
         }
+        false
     }
 
     pub fn print_board(&self) {
