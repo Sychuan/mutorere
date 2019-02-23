@@ -59,7 +59,6 @@ impl Game {
 
     fn check_game_over(&self) -> HashMap<i32, i32> {//Vec<Vec<i32>> {
         let check_value;
-        //let mut availiable=vec![];
         let mut availiable = HashMap::new();
 
         match &self.current_turn {
@@ -171,14 +170,14 @@ impl Game {
         print!("--");
         self.visualize_board(self.board[2]);
         println!();
-        println!(" |     |  / |");
+        println!(" |     |    |");
         self.visualize_board(self.board[7]);
         print!("--");
         self.visualize_board(self.board[8]);
         print!("--");
         self.visualize_board(self.board[3]);
         println!();
-        println!(" |  /  |    |");
+        println!(" |     |    |");
         self.visualize_board(self.board[6]);
         print!("--");
         self.visualize_board(self.board[5]);
