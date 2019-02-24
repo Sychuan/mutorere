@@ -122,7 +122,7 @@ impl Game {
     }
 
     fn swap(&mut self, pos: i32, free_pos: i32) {
-        println!("{}-->{}", pos, free_pos);
+        println!("move {}-->{}", pos, free_pos);
         self.board[free_pos as usize] = self.board[pos as usize];
         self.board[pos as usize] = 0;
     }
@@ -137,7 +137,7 @@ impl Game {
                     println!("you lost");
                     return true;
                 } else {
-                    println!("human----");
+                    println!("waiting for human move");
                     let (pos, free_pos) = self.get_player_move(res);
                     self.swap(pos as i32, free_pos);
                     self.current_turn = Players::Bot;
@@ -146,7 +146,7 @@ impl Game {
                 }
             }
             Players::Bot => {
-                println!("bot---");
+                println!("waiting for bot move");
                 let res = self.check_game_over();
                 if res.len() == 0 {
                     println!("Bot lost");
@@ -163,34 +163,57 @@ impl Game {
         false
     }
 
+    pub fn board_scheme(&self) {
+        print!(" {}", 0);
+        print!(" -- ");
+        print!("{}", 1);
+        print!(" -- ");
+        println!("{}", 2);
+
+        println!(" |    |    |");
+        print!(" {}", 7);
+        print!(" -- ");
+        print!("{}", 8);
+        print!(" -- ");
+        println!("{}", 3);
+        println!(" |    |    |");
+        print!(" {}", 6);
+        print!(" -- ");
+        print!("{}", 5);
+        print!(" -- ");
+        println!("{}", 4);
+    }
+
+
+    fn visualize_board(&self, i: i32) {
+        if i == 0 {
+            print!("   ")
+        } else if i == 1 { print!(" W ") } else if i == 2 { print!(" B ") }
+    }
+
     pub fn print_board(&self) {
+        println!();
         self.visualize_board(self.board[0]);
         print!("--");
         self.visualize_board(self.board[1]);
         print!("--");
         self.visualize_board(self.board[2]);
         println!();
-        println!(" |     |    |");
+        println!(" |    |    |");
         self.visualize_board(self.board[7]);
         print!("--");
         self.visualize_board(self.board[8]);
         print!("--");
         self.visualize_board(self.board[3]);
         println!();
-        println!(" |     |    |");
+        println!(" |    |    |");
         self.visualize_board(self.board[6]);
         print!("--");
         self.visualize_board(self.board[5]);
         print!("--");
         self.visualize_board(self.board[4]);
         println!();
-        println!("{}", "-".repeat(10));
-    }
-
-    fn visualize_board(&self, i: i32) {
-        if i == 0 {
-            print!("  ◇  ")
-        } else if i == 1 { print!(" ⚪ ") } else if i == 2 { print!(" ⚫ ") }
+        println!();
     }
 }
 
