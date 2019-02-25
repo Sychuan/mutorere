@@ -14,7 +14,7 @@ fn main() {
     game.value = x.1;
 
     loop {
-        if game.game_turn() { break }
+        if game.game_turn() { break; }
     }
     let mut player_input = String::new();
     io::stdin().read_line(&mut player_input).unwrap();
