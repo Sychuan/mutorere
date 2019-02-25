@@ -4,12 +4,13 @@ use std::io;
 use rand::Rng;
 
 pub struct Game {
-    current_turn: Players,
+    pub current_turn: Players,
     board: Vec<i32>,
+    pub value: (i32, i32),
 
 }
 
-enum Players {
+pub enum Players {
     Human,
     Bot,
 }
@@ -20,7 +21,32 @@ impl Game {
         Game {
             current_turn: Players::Human,
             board: vec![1, 1, 1, 1, 2, 2, 2, 2, 0],
+            value: (1, 2),
+
         }
+    }
+
+    pub fn first_move(&mut self) -> (Players, (i32, i32)) {
+        println!("Choose W(hite) or B(lack)");
+        let mut player_input = String::new();
+        io::stdin().read_line(&mut player_input).unwrap();
+        match player_input.trim().parse::<String>() {
+            Err(_) => println!("Try again"),
+            Ok(choice) => {
+                match &*choice.to_string() {
+                    "B" => {
+                        println!("Bot");
+                        return (Players::Bot, (2, 1));
+                    }
+                    "W" => {
+                        println!("Hum");
+                        return (Players::Human, (1, 2));
+                    }
+                    _ => {}
+                }
+            }
+        }
+        (Players::Human, (1, 2))
     }
 
     fn get_bot_move(&self, moves: HashMap<i32, i32>) -> (i32, i32) {
@@ -50,23 +76,23 @@ impl Game {
                 Ok(pos) => {
                     match moves.get(&pos) {
                         None => println!("Move impossible"),
-                        Some(free_pos) => return (pos as i32, *free_pos)
+                        Some(free_pos) => return (pos, *free_pos)
                     }
                 }
             }
         }
     }
 
-    fn check_game_over(&self) -> HashMap<i32, i32> {//Vec<Vec<i32>> {
+    fn check_game_over(&self) -> HashMap<i32, i32> {
         let check_value;
         let mut availiable = HashMap::new();
 
         match &self.current_turn {
             Players::Bot => {
-                check_value = 2;
+                check_value = self.value.1;
             }
             Players::Human => {
-                check_value = 1;
+                check_value = self.value.0;
             }
         }
 
@@ -89,10 +115,10 @@ impl Game {
         let mut result: Option<i32> = None;
         match &self.current_turn {
             Players::Bot => {
-                check_value = 1;
+                check_value = self.value.0;
             }
             Players::Human => {
-                check_value = 2;
+                check_value = self.value.1;
             }
         }
 
@@ -163,13 +189,19 @@ impl Game {
         false
     }
 
+
+    fn visualize_board(&self, i: i32) {
+        if i == 0 {
+            print!("   ")
+        } else if i == 1 { print!(" W ") } else if i == 2 { print!(" B ") }
+    }
+
     pub fn board_scheme(&self) {
         print!(" {}", 0);
         print!(" -- ");
         print!("{}", 1);
         print!(" -- ");
         println!("{}", 2);
-
         println!(" |    |    |");
         print!(" {}", 7);
         print!(" -- ");
@@ -182,13 +214,6 @@ impl Game {
         print!("{}", 5);
         print!(" -- ");
         println!("{}", 4);
-    }
-
-
-    fn visualize_board(&self, i: i32) {
-        if i == 0 {
-            print!("   ")
-        } else if i == 1 { print!(" W ") } else if i == 2 { print!(" B ") }
     }
 
     pub fn print_board(&self) {

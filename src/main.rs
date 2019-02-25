@@ -9,6 +9,9 @@ fn main() {
     println!("Scheme of board");
     game.board_scheme();
     game.print_board();
+    let x = game.first_move();
+    game.current_turn = x.0;
+    game.value = x.1;
 
     loop {
         if game.game_turn() { break }
